@@ -96,7 +96,7 @@ export function ImageUploader({
             <Upload
               className={`w-8 h-8 transition-colors ${dragOver ? "text-teal-500 dark:text-teal-400" : "text-slate-400 dark:text-slate-500 group-hover:text-teal-500 dark:group-hover:text-teal-400"}`}
             />
-          </div>
+          </div>  
           <p className="relative mt-4 text-sm font-medium text-slate-700 dark:text-slate-300">
             {dragOver
               ? "Drop your image here"

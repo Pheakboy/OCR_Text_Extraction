@@ -34,6 +34,16 @@ const LANGUAGES = [
   { code: "khm", label: "Khmer" },
 ];
 
+const PSM_MODES = [
+  { value: "3", label: "Automatic (Default)" },
+  { value: "6", label: "Single Block of Text" },
+  { value: "1", label: "Automatic with OSD" },
+  { value: "4", label: "Single Column" },
+  { value: "7", label: "Single Line" },
+  { value: "11", label: "Sparse Text (Scattered)" },
+  { value: "12", label: "Sparse Text + OSD" },
+];
+
 interface OcrResult {
   text: string;
   confidence: number;
@@ -58,6 +68,8 @@ function App() {
   const [result, setResult] = useState<OcrResult | null>(null);
   const [error, setError] = useState("");
   const [language, setLanguage] = useState("eng");
+  const [psm, setPsm] = useState("3");
+  const [enhanceImage, setEnhanceImage] = useState(true);
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const workerRef = useRef<Tesseract.Worker | null>(null);
 
@@ -128,12 +140,65 @@ function App() {
     setProgress(0);
 
     try {
+      let imageToProcess: string | File = selectedFile;
+
+      if (enhanceImage) {
+        // Image Preprocessing using Canvas
+        const img = new Image();
+        const imageUrl = URL.createObjectURL(selectedFile);
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          // Draw image
+          ctx.drawImage(img, 0, 0);
+          
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          
+          // Apply Grayscale and Contrast enhancement
+          const contrast = 1.2; // Increase contrast
+          const intercept = 128 * (1 - contrast);
+          
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            
+            // Grayscale (ITU-R 601-2 Luma transform)
+            let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            
+            // Contrast
+            gray = gray * contrast + intercept;
+            
+            // Clamp
+            gray = Math.min(255, Math.max(0, gray));
+            
+            data[i] = data[i + 1] = data[i + 2] = gray;
+          }
+          
+          ctx.putImageData(imageData, 0, 0);
+          imageToProcess = canvas.toDataURL("image/png");
+        }
+        URL.revokeObjectURL(imageUrl);
+      }
+
       // Create worker with no Web Worker - runs in main thread
       const worker = await Tesseract.createWorker(language, 1, {
         workerPath: "",
         workerBlobURL: false,
         corePath:
           "https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js",
+        langPath: "https://tessdata.projectnaptha.com/4.0.0_best",
         logger: (m) => {
           if (m.status === "recognizing text") {
             setProgress(Math.round(m.progress * 100));
@@ -142,8 +207,13 @@ function App() {
       });
 
       workerRef.current = worker;
+      
+      // Set PSM mode
+      await worker.setParameters({
+        tessedit_pageseg_mode: psm as any,
+      });
 
-      const { data } = await worker.recognize(selectedFile);
+      const { data } = await worker.recognize(imageToProcess);
 
       const extractedText = data.text.trim();
       const confidence = Math.round(data.confidence);
@@ -175,6 +245,7 @@ function App() {
               setProgress(Math.round(m.progress * 100));
             }
           },
+          // Note: Tesseract.recognize (scheduler version) has limited support for custom parameters in some versions
         });
 
         const extractedText = data.text.trim();
@@ -321,6 +392,44 @@ function App() {
                   </select>
                   <Globe className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors duration-300" />
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 transition-colors duration-300">
+                  <ScanText className="w-4 h-4 text-teal-500 dark:text-teal-400 transition-colors duration-300" />
+                  Text Layout (PSM)
+                </label>
+                <div className="relative">
+                  <select
+                    value={psm}
+                    onChange={(e) => setPsm(e.target.value)}
+                    className="w-full px-4 py-3 bg-white dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 appearance-none transition-colors duration-300 shadow-sm dark:shadow-none"
+                  >
+                    {PSM_MODES.map((mode) => (
+                      <option key={mode.value} value={mode.value}>
+                        {mode.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-slate-400 dark:border-t-slate-500" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 transition-colors duration-300">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">AI Image Enhancement</span>
+                </div>
+                <button
+                  onClick={() => setEnhanceImage(!enhanceImage)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${enhanceImage ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                >
+                  <span
+                    className={`${enhanceImage ? 'translate-x-4' : 'translate-x-1'} inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform`}
+                  />
+                </button>
               </div>
 
               <button
