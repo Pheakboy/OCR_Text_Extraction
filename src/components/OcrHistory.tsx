@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { Clock, Trash2, FileText, Sparkles } from "lucide-react";
+import { Clock, Trash2, FileText } from "lucide-react";
 
 interface OcrRecord {
   id: string;
@@ -70,10 +70,10 @@ export function OcrHistory({
     return (
       <div className="text-center py-8">
         <div className="relative inline-block mb-3">
-          <div className="p-3 rounded-xl bg-slate-800/50">
+          <div className="p-3 rounded-xl bg-slate-800/55 border border-slate-700/60">
             <Clock className="w-6 h-6 text-slate-600" />
           </div>
-          <div className="absolute inset-0 rounded-xl bg-teal-500/5 animate-pulse" />
+          <div className="absolute inset-0 rounded-xl bg-teal-500/5" />
         </div>
         <p className="text-sm text-slate-500">No extraction history yet</p>
         <p className="text-xs text-slate-600 mt-1">
@@ -88,13 +88,13 @@ export function OcrHistory({
       {records.map((record) => (
         <div
           key={record.id}
-          className="group flex items-start gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-teal-500/30 hover:bg-slate-800/50 transition-all cursor-pointer relative overflow-hidden"
+          className="group flex items-start gap-3 p-3 rounded-xl bg-slate-800/35 border border-slate-700/50 hover:border-teal-500/35 hover:bg-slate-800/60 transition-all cursor-pointer relative overflow-hidden"
           onClick={() => onSelect(record)}
         >
           {/* Hover glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-teal-500/0 via-cyan-500/0 to-teal-500/0 group-hover:from-teal-500/5 group-hover:via-cyan-500/5 group-hover:to-teal-500/5 transition-all duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-r from-teal-500/0 via-cyan-500/0 to-teal-500/0 group-hover:from-teal-500/6 group-hover:via-cyan-500/5 group-hover:to-teal-500/6 transition-all duration-300" />
 
-          <div className="relative p-1.5 rounded-lg bg-slate-700/50 mt-0.5">
+          <div className="relative p-1.5 rounded-lg bg-slate-700/55 mt-0.5 border border-slate-600/50">
             <FileText className="w-3.5 h-3.5 text-slate-400" />
           </div>
           <div className="flex-1 min-w-0 relative">

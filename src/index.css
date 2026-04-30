@@ -5,7 +5,10 @@
 @layer base {
   * {
     scrollbar-width: thin;
-    scrollbar-color: #1e293b transparent;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .dark * {
+    scrollbar-color: #334155 transparent;
   }
   *::-webkit-scrollbar {
     width: 6px;
@@ -14,16 +17,42 @@
     background: transparent;
   }
   *::-webkit-scrollbar-thumb {
-    background-color: #1e293b;
+    background-color: #cbd5e1;
     border-radius: 3px;
   }
+  .dark *::-webkit-scrollbar-thumb {
+    background-color: #334155;
+  }
   body {
+    font-family:
+      Inter,
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      "Noto Sans",
+      "Liberation Sans",
+      sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: #f8fafc;
+    color: #0f172a;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  .dark body {
+    background-color: #020617; /* slate-950 */
+    color: #f8fafc; /* slate-50 */
   }
   select option {
-    background-color: #1e293b;
-    color: #e2e8f0;
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+  .dark select option {
+    background-color: #0f172a;
+    color: #f8fafc;
   }
 }
 
